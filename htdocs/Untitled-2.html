@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flappy Bird Game</title>
+    <style>
+        /* Styles for the game */
+        body {
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        #canvas {
+            border: 1px solid black;
+        }
+        .random {
+            height: 100vh;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        h3 {
+            text-align: center;
+            font-size: 2rem;
+        }
+        .score_val {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .score_title {
+            position: absolute;
+            top: 10px;
+            left: 50px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            font-weight: bold;
+            color: red;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" width="400" height="600"></canvas>
+    <div class="random">
+        <h3>Press Enter to Start</h3>
+    </div>
+    <div class="background"></div>
+    <div class="bird"></div>
+    <div class="score_val">0</div>
+    <div class="score_title">Score :</div>
+    <div class="message">Press Enter To Restart</div>
+    <script>
+        // Get the canvas element
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+
+        // Set the canvas dimensions
+        canvas.width = 400;
+        canvas.height = 600;
+
+        // Define some constants
+        var GRAVITY = 0.2;
+        var JUMP_HEIGHT = -6;
+        var PIPE_WIDTH = 80;
+        var PIPE_GAP = 150;
+        var BIRD_WIDTH = 40;
+        var BIRD_HEIGHT = 30;
+
+        // Define the bird object
+        var bird = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            vy: 0,
+            width: BIRD_WIDTH,
+            height: BIRD_HEIGHT
+        };
+
+        // Define the pipe objects
+        var pipes = [];
+        var pipeInterval = 100;
+        var pipeTimer = 0;
+
+        // Define the score
+        var score = 0;
+
+        // Define the game state
+        var gameOver = true;
+
+        // Handle keyboard input
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                if (gameOver) {
+                    gameOver = false;
+                    bird.y = canvas.height / 2;
+                    bird.vy = 0;
+                    pipes = [];
+                    pipeTimer = 0;
+                    score = 0;
+                } else {
+                    bird.vy = JUMP_HEIGHT;
+                }
+            }
+        });
+
+        // Update the game state
+        function update() {
+            if (!gameOver) {
+                // Update the bird's velocity
+                bird.vy += GRAVITY;
+
+                // Update the bird's position
+                bird.y += bird.vy;
+
+                // Check for collision with the ground
+                if (bird.y + bird.height > canvas.height) {
+                    gameOver = true;
+                }
+
+                // Update the pipes
+                pipeTimer++;
+                if (pipeTimer > pipeInterval) {
+                    pipeTimer = 0;
+                    pipes.push({
+                        x: canvas.width,
+                        y: Math.random() * (canvas.height - PIPE_GAP)
+                    });
+                }
+
+                // Update the score
+                if (pipes.length > 0 && bird.x > pipes[0].x + PIPE_WIDTH) {
+                    score++;
+                    pipes.shift();
+                }
+
+                // Check for collision with the pipes
+                for (var i = 0; i < pipes.length; i++) {
+                    if (checkCollision(bird, pipes[i])) {
+                        gameOver = true;
+                    }
+                }
+            }
+        }
+
+        // Draw the game
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the background
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the bird
+            ctx.fillStyle = '#FFD700';
+            ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
+
+            // Draw the pipes
